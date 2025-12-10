@@ -15,6 +15,7 @@ limitations under the License.
 
 #include "xla/backends/profiler/gpu/cupti_collector.h"
 
+#include <algorithm>
 #include <climits>
 #include <cmath>
 #include <cstddef>
@@ -453,6 +454,37 @@ class PerDeviceCollector {
       CreateXEvent(event, plane, start_gpu_ns, end_gpu_ns, &line);
       events_types_per_line[line_id].emplace(event.type);
     }
+
+    // Handle Environment events separately to create counter lines.
+    auto first_env_event = std::partition(
+        events_.begin(), events_.end(), [](const CuptiTracerEvent& event) {
+          return event.type != CuptiTracerEventType::Environment;
+        });
+
+    if (first_env_event != events_.end()) {
+      VLOG(1) << "Processing " << events_.end() - first_env_event
+              << " environment events";
+      XLineBuilder counter_line = device_plane->GetOrCreateCounterLine();
+      for (auto it = first_env_event; it != events_.end(); ++it) {
+        const auto& event = *it;
+        VLOG(3) << "Environment event: " << event.name << " "
+                << event.start_time_ns << " " << event.environment_info.value;
+        // Create a metadata for each metric (e.g., "power_mw", "gpu_temp_c").
+        XEventMetadata* event_metadata =
+            device_plane->GetOrCreateEventMetadata(event.name);
+
+        // Create an event on the counter line.
+        XEventBuilder xevent = counter_line.AddEvent(
+            tsl::profiler::Timespan(
+                tsl::profiler::NanoToPico(event.start_time_ns - start_gpu_ns),
+                0),
+            *event_metadata);
+        xevent.AddStatValue(*device_plane->GetOrCreateStatMetadata(event.name),
+                            static_cast<double>(event.environment_info.value));
+      }
+      events_.erase(first_env_event, events_.end());
+    }
+
     device_plane->ForEachLine([&](XLineBuilder line) {
       // If the line name is already set, we should not override it.
       line.SetNameIfEmpty(

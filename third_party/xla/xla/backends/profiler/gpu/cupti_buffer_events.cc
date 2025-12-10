@@ -299,6 +299,43 @@ void AddMarkerDataActivityEvent(CuptiEventCollectorDelegate& collector,
   }
 }
 
+void AddEnvironmentActivityEvent(CuptiEventCollectorDelegate& collector,
+                                 const CUpti_ActivityEnvironment* environment) {
+  CuptiTracerEvent event{};
+  event.type = CuptiTracerEventType::Environment;
+  event.source = CuptiTracerEventSource::Activity;
+  event.start_time_ns = environment->timestamp;
+  event.end_time_ns = environment->timestamp;
+  event.device_id = environment->deviceId;
+  event.stream_id = 0;
+
+  auto create_and_receive = [&](const char* name, uint64_t value) {
+    CuptiTracerEvent event_copy = event;
+    event_copy.name = name;
+    event_copy.environment_info.value = value;
+    collector.receive(std::move(event_copy));
+  };
+
+  switch (environment->environmentKind) {
+    case CUPTI_ACTIVITY_ENVIRONMENT_SPEED:
+      create_and_receive("sm_clock_mhz", environment->data.speed.smClock);
+      create_and_receive("memory_clock_mhz",
+                         environment->data.speed.memoryClock);
+      create_and_receive("throttle_reasons",
+                         environment->data.speed.clocksThrottleReasons);
+      break;
+    case CUPTI_ACTIVITY_ENVIRONMENT_TEMPERATURE:
+      create_and_receive("gpu_temp_c",
+                         environment->data.temperature.gpuTemperature);
+      break;
+    case CUPTI_ACTIVITY_ENVIRONMENT_POWER:
+      create_and_receive("power_mw", environment->data.power.power);
+      break;
+    default:
+      break;
+  }
+}
+
 void AddMemcpyActivityEvent(CuptiEventCollectorDelegate &collector,
                             const CuptiActivityMemcpyTy *memcpy) {
   CuptiTracerEvent event{};
@@ -610,6 +647,10 @@ static absl::Status ConvertActivityBuffer(
         case CUPTI_ACTIVITY_KIND_MARKER_DATA:
           AddMarkerDataActivityEvent(collector, static_cast<void*>(record));
           break;
+        case CUPTI_ACTIVITY_KIND_ENVIRONMENT:
+          AddEnvironmentActivityEvent(
+              collector, reinterpret_cast<CUpti_ActivityEnvironment*>(record));
+          break;
         default:
           VLOG(3) << "Activity type " << record->kind << " is not supported.";
           break;
@@ -679,6 +720,8 @@ const char *GetTraceEventTypeName(const CuptiTracerEventType &type) {
       return "CudaGraphNodeMap";
     case CuptiTracerEventType::MarkerData:
       return "MarkerData";
+    case CuptiTracerEventType::Environment:
+      return "Environment";
     case CuptiTracerEventType::Unsupported:
       return "";
   }
