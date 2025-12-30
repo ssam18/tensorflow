@@ -10,6 +10,29 @@ package(
 )
 
 cc_library(
+    name = "jit_batch_scheduler",
+    hdrs = ["jit_batch_scheduler.h"],
+    deps = [
+        ":batch_scheduler",
+        "//tensorflow/core:lib",
+        "@com_google_absl//absl/status",
+    ],
+)
+
+tf_cc_test(
+    name = "jit_batch_scheduler_test",
+    srcs = ["jit_batch_scheduler_test.cc"],
+    deps = [
+        ":jit_batch_scheduler",
+        "//tensorflow/core:lib",
+        "//tensorflow/core:test",
+        "//tensorflow/core:test_main",
+        "@com_google_absl//absl/synchronization",
+        "@xla//xla/tsl/platform:criticality",
+    ],
+)
+
+cc_library(
     name = "periodic_function_dynamic",
     srcs = ["periodic_function.cc"],
     hdrs = ["periodic_function.h"],
@@ -120,7 +143,6 @@ cc_library(
     deps = [
         "//tensorflow/core:framework_lite",
         "//tensorflow/core:portable_gif_internal",
-        "//tensorflow/core/lib/core:notification",
         "//tensorflow/core/lib/core:status",
         "//tensorflow/core/platform:thread_annotations",
         "@com_google_absl//absl/status:statusor",

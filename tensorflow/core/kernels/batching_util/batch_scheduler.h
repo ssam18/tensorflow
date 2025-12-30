@@ -39,6 +39,7 @@ limitations under the License.
 #include <utility>
 #include <vector>
 
+#include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/notification.h"
@@ -92,10 +93,14 @@ class BatchTask {
   // size of a batch. (A batch's size is the sum of its task sizes.)
   virtual size_t size() const = 0;
 
-  // Returns the criticality of associated with the task. It defaults to
-  // kCritical.
+  // Returns the criticality of the task.
   virtual tsl::criticality::Criticality criticality() const {
-    return tsl::criticality::Criticality::kCritical;
+    return tsl::criticality::Criticality::kSheddable;
+  }
+
+  // Called when the task is finished, either successfully or with an error.
+  virtual void FinishTask(const absl::Status& status) {
+    // Default implementation does nothing. Subclasses should override.
   }
 };
 
