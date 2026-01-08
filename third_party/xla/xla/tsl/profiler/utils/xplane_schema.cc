@@ -66,6 +66,7 @@ const absl::string_view kKernelLaunchLineName = "Launch Stats";
 const absl::string_view kSourceLineName = "Source code";
 const absl::string_view kHostOffloadOpLineName = "Host Offload Ops";
 const absl::string_view kCounterEventsLineName = "_counters_";
+const absl::string_view kCounterValue = "counter_value";
 const absl::string_view kTensorCoreSyncFlagLineName = "Tensor Core Sync Flag";
 const absl::string_view kSparseCoreSyncsLineName = "Sparse Core Syncs";
 
@@ -222,6 +223,7 @@ const StatTypeMap& GetStatTypeMap() {
        {"queue_id", kQueueId},
        {"request_id", kRequestId},
        {"run_id", kRunId},
+       {"global_chip_id", kGlobalChipId},
        {"replica_id", kReplicaId},
        {"graph_type", kGraphType},
        {"step_num", kStepNum},
@@ -297,6 +299,7 @@ const StatTypeMap& GetStatTypeMap() {
        {"dcn_collective_info", kDcnCollectiveInfo},
        {"all_reduce_id", kAllReduceId},
        {"all_reduce_unique_id", kAllReduceUniqueId},
+       {"performance_counter_id", kPerformanceCounterId},
        // Performance counter related.
        {"Raw Value", kRawValue},
        {"Scaled Value", kScaledValue},
@@ -304,6 +307,8 @@ const StatTypeMap& GetStatTypeMap() {
        {"Time Scale Multiplier", kTimeScaleMultiplier},
        {"matrix_unit_utilization_percent", kMatrixUnitUtilizationPercent},
        {"hbm_utilization_percent", kHbmUtilizationPercent},
+       {"performance_counter_description", kPerformanceCounterDescription},
+       {"performance_counter_sets", kPerformanceCounterSets},
        // XLA metadata map related.
        {"Hlo Proto", kHloProto},
        {"EdgeTPU Model information", kEdgeTpuModelInfo},
