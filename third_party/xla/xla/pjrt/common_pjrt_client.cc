@@ -653,10 +653,9 @@ CommonPjRtClient::AllocateOutputBuffersWithInputReuse(
       }
       TF_ASSIGN_OR_RETURN(int64_t on_device_bytes,
                           GetOnDeviceBytesCount(memory_space, leaf_shape));
-      TF_ASSIGN_OR_RETURN(auto raw_buffer,
-                          AllocateRawBuffer(memory_space, on_device_bytes,
-                                            /*retry_on_oom=*/false,
-                                            /*allocate_after=*/{}));
+      TF_ASSIGN_OR_RETURN(auto raw_buffer, AllocateRawBufferForExecute(
+                                               memory_space, on_device_bytes,
+                                               /*retry_on_oom=*/false));
       buffers.push_back(std::move(raw_buffer));
     } else {
       // a tuple output element alias to input. There are 3 supported cases.
