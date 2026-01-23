@@ -970,6 +970,10 @@ FieldOffsetsAndSizesForVersion(int major_version, int minor_version) {
       add_field("PJRT_Event_Create", kFnPtrSize);
       add_field("PJRT_Event_Set", kFnPtrSize);
     }
+    if (minor_version >= 91) {
+      add_field("PJRT_Executable_ParameterShardings", kFnPtrSize);
+      add_field("PJRT_Executable_OutputShardings", kFnPtrSize);
+    }
     return version_offsets_and_sizes;
   }
   LOG(FATAL) << "Unsupported API version: " << major_version << "."
@@ -1393,6 +1397,12 @@ TEST_F(PjrtCAbiTestBase, FieldOffsetsAndSizes) {
           {"PJRT_Event_Set",
            {offsetof(PJRT_Api, PJRT_Event_Set),
             sizeof(PJRT_Api::PJRT_Event_Set)}},
+          {"PJRT_Executable_ParameterShardings",
+           {offsetof(PJRT_Api, PJRT_Executable_ParameterShardings),
+            sizeof(PJRT_Api::PJRT_Executable_ParameterShardings)}},
+          {"PJRT_Executable_OutputShardings",
+           {offsetof(PJRT_Api, PJRT_Executable_OutputShardings),
+            sizeof(PJRT_Api::PJRT_Executable_OutputShardings)}},
       };
   ASSERT_EQ(api_->pjrt_api_version.major_version, PJRT_API_MAJOR);
   ASSERT_EQ(api_->pjrt_api_version.minor_version, PJRT_API_MINOR);

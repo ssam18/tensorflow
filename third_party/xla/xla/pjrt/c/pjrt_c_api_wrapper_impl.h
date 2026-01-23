@@ -148,9 +148,11 @@ struct PJRT_Executable {
   std::vector<std::string> cost_analysis_names;
   std::vector<PJRT_NamedValue> cost_analysis_properties;
 
-  bool memory_kind_ran ABSL_GUARDED_BY(mutex) = false;
-  std::vector<const char*> memory_kinds;
-  std::vector<size_t> memory_kind_sizes;
+  bool parameter_shardings_ran ABSL_GUARDED_BY(mutex) = false;
+  bool has_parameter_shardings = false;
+  std::vector<std::string> parameter_shardings;
+  std::vector<const char*> parameter_sharding_ptrs;
+  std::vector<size_t> parameter_sharding_sizes;
 
   bool out_type_ran ABSL_GUARDED_BY(mutex) = false;
   std::vector<PJRT_Buffer_Type> out_types;
@@ -159,9 +161,19 @@ struct PJRT_Executable {
   std::vector<int64_t> out_dimensions;
   std::vector<size_t> out_dimension_sizes;
 
+  bool output_shardings_ran ABSL_GUARDED_BY(mutex) = false;
+  bool has_output_shardings = false;
+  std::vector<std::string> output_shardings;
+  std::vector<const char*> output_sharding_ptrs;
+  std::vector<size_t> output_sharding_sizes;
+
   bool out_layouts_ran ABSL_GUARDED_BY(mutex) = false;
   std::vector<PJRT_Layouts_MemoryLayout> out_layouts;
   std::vector<PJRT_Layouts_MemoryLayout*> out_layouts_pointers;
+
+  bool memory_kind_ran ABSL_GUARDED_BY(mutex) = false;
+  std::vector<const char*> memory_kinds;
+  std::vector<size_t> memory_kind_sizes;
 
   explicit PJRT_Executable(std::shared_ptr<xla::PjRtExecutable> executable);
   explicit PJRT_Executable(xla::PjRtExecutable* executable);

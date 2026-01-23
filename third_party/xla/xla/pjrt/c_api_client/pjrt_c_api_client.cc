@@ -1968,6 +1968,44 @@ static absl::StatusOr<Shape> GetOutputShapeHelper(
   return ShapeUtil::MakeTupleShape(shapes);
 }
 
+std::optional<std::vector<OpSharding>>
+PjRtCApiExecutable::GetParameterShardings() const {
+  const PJRT_Api* api = pjrt_c_api();
+  if (api->PJRT_Executable_ParameterShardings == nullptr) {
+    return std::nullopt;
+  }
+  PJRT_Executable_ParameterShardings_Args args;
+  args.struct_size = PJRT_Executable_ParameterShardings_Args_STRUCT_SIZE;
+  args.extension_start = nullptr;
+  args.executable = c_executable();
+  std::unique_ptr<PJRT_Error, pjrt::PJRT_ErrorDeleter> error(
+      api->PJRT_Executable_ParameterShardings(&args),
+      pjrt::MakeErrorDeleter(api));
+  if (error != nullptr) {
+    LOG(ERROR) << "PJRT_Executable_ParameterShardings failed: "
+               << pjrt::PjrtErrorToStatus(error.get(), api);
+    return std::nullopt;
+  }
+
+  if (args.shardings == nullptr) {
+    return std::nullopt;
+  }
+
+  std::optional<std::vector<OpSharding>> shardings;
+  shardings.emplace();
+  shardings->reserve(args.num_parameters);
+  for (size_t i = 0; i < args.num_parameters; ++i) {
+    OpSharding sharding;
+    if (!sharding.ParseFromString(
+            std::string(args.shardings[i], args.sharding_sizes[i]))) {
+      LOG(ERROR) << "Failed to parse OpSharding proto";
+      return std::nullopt;
+    }
+    shardings->push_back(std::move(sharding));
+  }
+  return shardings;
+}
+
 absl::StatusOr<std::vector<Shape>> PjRtCApiExecutable::GetOutputShapes() const {
   TF_ASSIGN_OR_RETURN(std::vector<std::vector<PrimitiveType>> element_types,
                       GetOutputElementTypes());
@@ -2040,6 +2078,43 @@ PjRtCApiExecutable::GetOutputDimensions() const {
     out.push_back(std::move(dimensions));
   }
   return std::vector<std::vector<DimensionVector>>{std::move(out)};
+}
+
+std::optional<std::vector<OpSharding>> PjRtCApiExecutable::GetOutputShardings()
+    const {
+  const PJRT_Api* api = pjrt_c_api();
+  if (api->PJRT_Executable_OutputShardings == nullptr) {
+    return std::nullopt;
+  }
+  PJRT_Executable_OutputShardings_Args args;
+  args.struct_size = PJRT_Executable_OutputShardings_Args_STRUCT_SIZE;
+  args.extension_start = nullptr;
+  args.executable = c_executable();
+  std::unique_ptr<PJRT_Error, pjrt::PJRT_ErrorDeleter> error(
+      api->PJRT_Executable_OutputShardings(&args), pjrt::MakeErrorDeleter(api));
+  if (error != nullptr) {
+    LOG(ERROR) << "PJRT_Executable_OutputShardings failed: "
+               << pjrt::PjrtErrorToStatus(error.get(), api);
+    return std::nullopt;
+  }
+
+  if (args.shardings == nullptr) {
+    return std::nullopt;
+  }
+
+  std::optional<std::vector<OpSharding>> shardings;
+  shardings.emplace();
+  shardings->reserve(args.num_outputs);
+  for (size_t i = 0; i < args.num_outputs; ++i) {
+    OpSharding sharding;
+    if (!sharding.ParseFromString(
+            std::string(args.shardings[i], args.sharding_sizes[i]))) {
+      LOG(ERROR) << "Failed to parse OpSharding proto";
+      return std::nullopt;
+    }
+    shardings->push_back(std::move(sharding));
+  }
+  return shardings;
 }
 
 absl::StatusOr<std::vector<std::shared_ptr<const PjRtLayout>>>

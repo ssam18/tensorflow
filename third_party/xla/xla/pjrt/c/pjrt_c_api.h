@@ -104,7 +104,7 @@ PJRT_DEFINE_STRUCT_TRAITS(PJRT_Extension_Base, next);
 // Changes include:
 // * Adding a new field to the PJRT_Api or argument structs
 // * Renaming a method or argument (doesn't affect ABI)
-#define PJRT_API_MINOR 90
+#define PJRT_API_MINOR 91
 
 // The plugin should set the major_version and minor_version of
 // PJRT_Api.pjrt_api_version to be the `PJRT_API_MAJOR` and `PJRT_API_MINOR` in
@@ -2042,6 +2042,43 @@ PJRT_DEFINE_STRUCT_TRAITS(PJRT_Executable_OutputDimensions_Args, dim_sizes);
 typedef PJRT_Error* PJRT_Executable_OutputDimensions(
     PJRT_Executable_OutputDimensions_Args* args);
 
+struct PJRT_Executable_ParameterShardings_Args {
+  size_t struct_size;
+  PJRT_Extension_Base* extension_start;
+  PJRT_Executable* executable;
+  size_t num_parameters;  // out
+  // An array of serialized OpSharding protos.
+  // The array and its content are owned by and have the same lifetime as
+  // `executable`.
+  const char* const* shardings;  // out
+  // The size of each serialized sharding in `shardings`.
+  const size_t* sharding_sizes;  // out
+};
+PJRT_DEFINE_STRUCT_TRAITS(PJRT_Executable_ParameterShardings_Args,
+                          sharding_sizes);
+
+// Returns a list of parameter shardings.
+typedef PJRT_Error* PJRT_Executable_ParameterShardings(
+    PJRT_Executable_ParameterShardings_Args* args);
+
+struct PJRT_Executable_OutputShardings_Args {
+  size_t struct_size;
+  PJRT_Extension_Base* extension_start;
+  PJRT_Executable* executable;
+  size_t num_outputs;  // out
+  // An array of serialized OpSharding protos.
+  // The array and its content are owned by and have the same lifetime as
+  // `executable`.
+  const char* const* shardings;  // out
+  // The size of each serialized sharding in `shardings`.
+  const size_t* sharding_sizes;  // out
+};
+PJRT_DEFINE_STRUCT_TRAITS(PJRT_Executable_OutputShardings_Args, sharding_sizes);
+
+// Returns a list of output shardings.
+typedef PJRT_Error* PJRT_Executable_OutputShardings(
+    PJRT_Executable_OutputShardings_Args* args);
+
 struct PJRT_Executable_OutputMemoryKinds_Args {
   size_t struct_size;
   PJRT_Extension_Base* extension_start;
@@ -2912,9 +2949,15 @@ typedef struct PJRT_Api {
   _PJRT_API_STRUCT_FIELD(PJRT_Buffer_DonateWithControlDependency);
   _PJRT_API_STRUCT_FIELD(PJRT_Event_Create);
   _PJRT_API_STRUCT_FIELD(PJRT_Event_Set);
+
+  _PJRT_API_STRUCT_FIELD(PJRT_Executable_ParameterShardings);
+  _PJRT_API_STRUCT_FIELD(PJRT_Executable_OutputShardings);
 } PJRT_Api;
 
-enum { PJRT_Api_STRUCT_SIZE = PJRT_STRUCT_SIZE(PJRT_Api, PJRT_Event_Set) };
+enum {
+  PJRT_Api_STRUCT_SIZE =
+      PJRT_STRUCT_SIZE(PJRT_Api, PJRT_Executable_OutputShardings)
+};
 
 #undef _PJRT_API_STRUCT_FIELD
 

@@ -1,5 +1,9 @@
 # PJRT C API changelog
 
+## 0.91
+
+* Add `PJRT_Executable_ParameterShardings` and `PJRT_Executable_OutputShardings`
+
 ## 0.90
 
 * Added `total_size_in_bytes` field to `PJRT_Executable_GetCompiledMemoryStats_Args`.
